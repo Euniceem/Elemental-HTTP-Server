@@ -9,43 +9,46 @@ const server = http.createServer(function (req, res) {
   console.log('METHOD', req.method, req.url, req.httpVersion);
   console.log('HEADERS', req.headers);
 
-  // console.log(req.url);
   let request = req.method;
-  console.log(request);
+  console.log('REQUEST', request);
   console.log('URL', req.url)
 
   //GET METHOD
   if (request === "GET") {
+    let public = './public' + req.url;
+    let allFiles = fs.existsSync(public);
+
     if (req.url === "/") {
       fs.readFile('./public' + '/index.html', 'utf8', (err, data) => {
+
         if (err) { throw err; }
-        console.log('DATA', data);
         res.end(data);
       });
-    } else if (!req.url) {
+
+    } else if (!req.url === "/" || !req.url === allFiles) {
       fs.readFile('./public' + '/error.html', 'utf8', (err, data) => {
+
         if (err) { throw err; }
-        console.log('DATA', data);
         res.end(data);
       });
+
     } else
       fs.readFile('./public' + req.url, 'utf8', (err, data) => {
+
         if (err) { throw err; }
-        console.log('DATA', data);
         res.end(data);
       });
-  }
+  };
 
   //POST METHOD
   if (request === "POST") {
-    // req.uri = '/elements';
 
     let body = '';
     req.on('data', function (chunk) {
-      // console.log(chunk);
+
       body = querystring.parse(chunk.toString());
 
-      elementBody = `<!DOCTYPE html>
+      let elementBody = `<!DOCTYPE html>
       <html lang="en">
       <head>
         <meta charset="UTF-8">
@@ -61,12 +64,16 @@ const server = http.createServer(function (req, res) {
       </body>
       </html>
       `
-      const filePath = './public/' + body.elementName + '.html'
+      const filePath = './public/' + body.elementName + '.html';
 
       console.log('body:', body);
       console.log(elementBody);
       fs.appendFile(filePath, elementBody, 'utf8', (err, data) => {
         if (err) {
+          if (err.code === ENOENT) {
+            fs.write('file already exists');
+            res.end();
+          }
           fs.writeHead(500);
           fs.write('Sorry could not write file');
           res.end();
@@ -74,11 +81,9 @@ const server = http.createServer(function (req, res) {
         console.log('The file was saved!')
       });
     });
-    res.end();
-    // do something here with the body
     // return the response
     return res.end('goodbye');
-  }
+  };
 
 
 
